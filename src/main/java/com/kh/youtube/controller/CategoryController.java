@@ -36,7 +36,7 @@ public class CategoryController {
     }
 
     @PostMapping("/category")
-    public ResponseEntity<Category> crete(@RequestBody Category category) {
+    public ResponseEntity<Category> create(@RequestBody Category category) {
         try {
             return ResponseEntity.status(HttpStatus.OK).body(service.create(category));
         } catch (Exception e) {
