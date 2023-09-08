@@ -13,7 +13,7 @@ public interface ChannelDAO extends JpaRepository<Channel, Integer> {
     // SELECT * FROM channel WHERE id=?
 
     @Query(value = "SELECT * FROM channel WHERE id= :id", nativeQuery = true) // ?대신에 id가 들어가야되서 :id
-    List<Channel> findByMemberId(String id);
-    //List<Channel> findByMemberId(@Param("id") String id);
+    //List<Channel> findByMemberId(String id);
+    List<Channel> findByMemberId(@Param("id") String id);
 
 }
