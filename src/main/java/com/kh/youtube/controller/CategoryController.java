@@ -12,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/*")
+@CrossOrigin(origins = {"*"}, maxAge = 6000)
 public class CategoryController {
 
     @Autowired

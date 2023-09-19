@@ -61,10 +61,10 @@ public class VideoController {
     }
 
     // 좋아요 추가 : POST - http://localhost:8080/api/video/like
-    @PostMapping("/video/like")
-    public ResponseEntity<Video> VideoLike(@RequestBody VideoLike vo) {
-        return ResponseEntity.status(HttpStatus.OK).body(videolike.create(vo));
-    }
+//    @PostMapping("/video/like")
+//    public ResponseEntity<Video> VideoLike(@RequestBody VideoLike vo) {
+//        return ResponseEntity.status(HttpStatus.OK).body(videolike.create(vo));
+//    }
 
     // 좋아요 취소 : DELETE - http://localhost:8080/api/video/like/1
     // 댓글 추가 : POST - http://localhost:8080/api/video/comment
