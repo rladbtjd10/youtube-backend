@@ -46,6 +46,8 @@ public class ChannelController {
     @GetMapping("/channel/{id}/video")
     public ResponseEntity<List<Video>> channelVideoList(@PathVariable int id) {
         // SELECT * FROM video WHERE channel_code=? -VideoDAO에 삽입함
+        return ResponseEntity.status(HttpStatus.OK).body(video.findByChannelCode(id));
+    }
 
     //채널 추가 : POST -  http://localhost:8080/api/channel
     @PostMapping("/channel")
