@@ -1,24 +1,31 @@
 package com.kh.youtube.controller;
 
-import com.kh.youtube.domain.Category;
-import com.kh.youtube.domain.Channel;
-import com.kh.youtube.domain.Subscribe;
-import com.kh.youtube.domain.Video;
+import com.kh.youtube.domain.*;
 import com.kh.youtube.service.ChannelService;
 import com.kh.youtube.service.SubscribeService;
 import com.kh.youtube.service.VideoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/*")
 public class ChannelController {
+
+    @Value("${spring.servlet.multipart.location}") // application.properties에 있는 변수
+    private String uploadPath;
 
     @Autowired
     private ChannelService channel;
@@ -28,7 +35,7 @@ public class ChannelController {
 
     @Autowired
     private SubscribeService subscribe;
-    
+
     //채널 조회 : GET - http://localhost:8080/api/channel/1
     @GetMapping("/channel/{id}")
     public ResponseEntity<Channel> showChannel(@PathVariable int id) {
@@ -39,12 +46,38 @@ public class ChannelController {
     @GetMapping("/channel/{id}/video")
     public ResponseEntity<List<Video>> channelVideoList(@PathVariable int id) {
         // SELECT * FROM video WHERE channel_code=? -VideoDAO에 삽입함
-        return ResponseEntity.status(HttpStatus.OK).body(video.findByChannelCode(id));
-    }
 
     //채널 추가 : POST -  http://localhost:8080/api/channel
     @PostMapping("/channel")
-    public ResponseEntity<Channel> createChannel(@RequestBody Channel vo) {
+    public ResponseEntity<Channel> createChannel(MultipartFile photo, String name, String desc) {
+        log.info("name : " + name);
+        log.info("desc : " + desc );
+        log.info("photo : " + photo);
+
+        String originalPhoto = photo.getOriginalFilename();
+        String realPhoto = originalPhoto.substring(originalPhoto.lastIndexOf("\\")+1);
+
+        String uuid = UUID.randomUUID().toString();
+
+        String savePhoto = uploadPath + File.separator + uuid + "_" + realPhoto; //실제저장할savePhoto
+        Path pathPhoto = Paths.get(savePhoto);
+
+        try {
+            photo.transferTo(pathPhoto);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // 파일 업로드가 끝났으니 경로 (savePhoto), name, desc, memberId (id)
+        Channel vo = new Channel();
+        vo.setChannelPhoto(savePhoto);
+        vo.setChannelName(name);
+        vo.setChannelDesc(desc);
+        Member member = new Member();
+        member.setId("user1");
+        vo.setMember(member);
+
+        //return ResponseEntity.status(HttpStatus.OK).build();
         return ResponseEntity.status(HttpStatus.OK).body(channel.create(vo));
     }
 
