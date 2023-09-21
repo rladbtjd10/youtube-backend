@@ -2,11 +2,14 @@ package com.kh.youtube.controller;
 
 import com.kh.youtube.domain.*;
 import com.kh.youtube.service.VideoCommentService;
-import com.kh.youtube.service.VideoLikeService;
 import com.kh.youtube.service.VideoService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,13 +41,31 @@ public class VideoController {
 
     // 영상 전체 조회 : GET - http://localhost:8080/api/video
     @GetMapping("/video")
-    public ResponseEntity<List<Video>> VideoList() {
-        return ResponseEntity.status(HttpStatus.OK).body(videoService.showAll());
+    //@RequestParam 숨겨있을뿐 명시해줘야되서 파라미터를 넣지 않는경우(?page=1을 안하는 경우/즉 http://localhost:8080/api/video)에 페이지를 1로 맞춘다라는 의미
+    public ResponseEntity<List<Video>> VideoList(@RequestParam(name="page", defaultValue = "1") int page) {
+
+        // 정렬
+        Sort sort = Sort.by("videoCode").descending();
+
+        // 한 페이지의 10개 
+        Pageable pageable = PageRequest.of(page-1, 10, sort); //page-1한이유 처음 페이지를 1로 맞추기 위해
+        Page<Video> result = videoService.showAll(pageable);
+
+        log.info("Total Pages : " + result.getTotalPages()); // 총 몇 페이지
+        log.info("Total Count : " + result.getTotalElements()); // 전체 개수
+        log.info("Page Number : " + result.getNumber()); //현재 페이지 번호
+        log.info("Page Size : " + result.getSize()); // 페이지당 데이터 개수
+        log.info("Next Page : " + result.hasNext()); // 다음 페이지가 있는지 존재 여부
+        log.info("First Page : " + result.isFirst()); //시작 페이지 여부
+
+        //return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.OK).body(result.getContent()); //getContent return 타입이 List<Video>
     }
 
     // 영상 추가 : POST - http://localhost:8080/api/video
     @PostMapping("/video")
-    public ResponseEntity<Video> createVideo(MultipartFile video, MultipartFile image, String title, String desc, String categoryCode) {
+    //기본값이 아닌 값들은 required = false로 지정하는 방법(여러개일 경우 각각의 것들에다가 지정해주면됨)
+    public ResponseEntity<Video> createVideo(MultipartFile video, MultipartFile image, String title, @RequestParam(name="desc", required = false) String desc, String categoryCode) {
         log.info("video : " + video);
         log.info("image : " + image);
         log.info("title : " + title);
@@ -83,13 +104,13 @@ public class VideoController {
         Video vo = new Video();
         vo.setVideoTitle(title);
         vo.setVideoDesc(desc);
-        vo.setVideoUrl(saveVideo);
-        vo.setVideoPhoto(saveImage);
+        vo.setVideoUrl(uuid + "_" + realVideo);
+        vo.setVideoPhoto(uuid + "_" + realImage);
         Category category = new Category();
         category.setCategoryCode(Integer.parseInt(categoryCode));
         vo.setCategory(category);
         Channel channel = new Channel();
-        channel.setChannelCode(22);
+        channel.setChannelCode(24);
         vo.setChannel(channel);
         Member member = new Member();
         member.setId("user1");
