@@ -1,8 +1,11 @@
 package com.kh.youtube.controller;
 
 import com.kh.youtube.domain.*;
+import com.kh.youtube.domain.QVideo;
 import com.kh.youtube.service.VideoCommentService;
 import com.kh.youtube.service.VideoService;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +32,7 @@ import java.util.UUID;
 @CrossOrigin(origins={"*"}, maxAge = 6000) //리액트랑 연결 시키기 위해서
 public class VideoController {
 
-    @Value("${spring.servlet.multipart.location}") // application.properties에 있는 변수
+    @Value("${youtube.upload.path}") // application.properties에 있는 변수
     private String uploadPath;
 
     @Autowired
@@ -42,14 +45,31 @@ public class VideoController {
     // 영상 전체 조회 : GET - http://localhost:8080/api/video
     @GetMapping("/video")
     //@RequestParam 숨겨있을뿐 명시해줘야되서 파라미터를 넣지 않는경우(?page=1을 안하는 경우/즉 http://localhost:8080/api/video)에 페이지를 1로 맞춘다라는 의미
-    public ResponseEntity<List<Video>> VideoList(@RequestParam(name="page", defaultValue = "1") int page) {
+    public ResponseEntity<List<Video>> VideoList(@RequestParam(name="page", defaultValue = "1") int page, @RequestParam(name="category", required = false) Integer category) { // int와 달리 Integer로 지정하면 null값도 받을수 있음
 
         // 정렬
         Sort sort = Sort.by("videoCode").descending();
 
         // 한 페이지의 10개 
-        Pageable pageable = PageRequest.of(page-1, 10, sort); //page-1한이유 처음 페이지를 1로 맞추기 위해
-        Page<Video> result = videoService.showAll(pageable);
+        Pageable pageable = PageRequest.of(page-1, 20, sort); //page-1한이유 처음 페이지를 1로 맞추기 위해
+
+        // 동적 쿼리를 위한 QueryDSL을 사용한 코드들 추가
+
+        // 1. Q도메인 클래스를 가져와야 한다. -> build.gradle로 만드는거
+        QVideo qVideo = QVideo.video;
+
+        // 2. BooleanBuilder는 where문에 들어가는 조건들을 넣어주는 컨테이너
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if(category!=null) {
+            // 3. 원하는 조건은 필드값과 같이 결합해서 생성한다.
+            BooleanExpression expression = qVideo.category.categoryCode.eq(category);
+
+            // 4. 만들어진 조건은 where문에 and나 or 같은 키워드와 결합한다.
+            builder.and(expression);
+        }
+
+        Page<Video> result = videoService.showAll(pageable, builder);
 
         log.info("Total Pages : " + result.getTotalPages()); // 총 몇 페이지
         log.info("Total Count : " + result.getTotalElements()); // 전체 개수

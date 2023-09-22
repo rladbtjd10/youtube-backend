@@ -24,7 +24,7 @@ import java.util.UUID;
 @RequestMapping("/api/*")
 public class ChannelController {
 
-    @Value("${spring.servlet.multipart.location}") // application.properties에 있는 변수
+    @Value("${youtube.upload.path}") // application.properties에 있는 변수
     private String uploadPath;
 
     @Autowired
