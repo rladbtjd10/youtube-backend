@@ -4,6 +4,7 @@ import com.kh.youtube.domain.Member;
 import com.kh.youtube.repo.MemberDAO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -45,6 +46,14 @@ public class MemberService {
         Member target = dao.findById(id).orElse(null);
         dao.delete(target);
         return target;
+    }
+
+    public Member getByCredentials(String id, String password, PasswordEncoder encoder){
+        Member member = dao.findById(id).orElse(null);
+        if(member!=null && encoder.matches(password, member.getPassword())) { //입력한 패스워드,기존에 잇는정보에패스워드
+            return member;
+        }
+        return null;
     }
 
 }
